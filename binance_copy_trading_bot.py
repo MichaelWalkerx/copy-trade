@@ -153,7 +153,7 @@ def place_order(command, _symbol, position_side, quantity, price, portfolio_id, 
 
 
 # 定义函数：打印带单员详情
-def print_leader_detail(leader_detail):
+def print___leader_detail(leader_detail):
     """
     打印带单员的详细信息。
     """
@@ -168,7 +168,7 @@ def print_leader_detail(leader_detail):
 
 
 # 定义函数：打印带单员持仓信息
-def print_leader_position(leader_position_list):
+def print___leader_position(leader_position_list):
     """
     打印带单员的持仓信息列表。
     """
@@ -191,22 +191,22 @@ def sync_position():
     # 获取跟随的带单员的详情和持仓信息
     leader_detail = fetch_leader_detail(followed_leader_id)
     leader_margin_balance = float(leader_detail['marginBalance']) # 带单员的保证金余额
-    print_leader_detail(leader_detail) # 打印带单员详情
+    print___leader_detail(leader_detail) # 打印带单员详情
 
     leader_portfolio = fetch_portfolio(followed_leader_id)
     # 过滤出带单员当前有持仓的列表 (adl不为零表示有持仓)
     leader_cur_open_position = [item for item in leader_portfolio if item.get('adl') != 0]
-    print_leader_position(leader_cur_open_position) # 打印带单员持仓信息
+    print___leader_position(leader_cur_open_position) # 打印带单员持仓信息
 
     # 获取我自己的详情和持仓信息
     my_detail = fetch_leader_detail(my_leader_id)
     my_margin_balance = float(my_detail['marginBalance']) # 我自己的保证金余额
-    print_leader_detail(my_detail) # 打印我自己的详情
+    print___leader_detail(my_detail) # 打印我自己的详情
 
     my_portfolio = fetch_portfolio(my_leader_id)
     # 过滤出我自己当前有持仓的列表 (adl不为零表示有持仓)
     my_cur_open_position = [item for item in my_portfolio if item.get('adl') != 0]
-    print_leader_position(my_cur_open_position) # 打印我自己的持仓信息
+    print___leader_position(my_cur_open_position) # 打印我自己的持仓信息
 
     # 获取我自己的杠杆设置信息
     my_leverage_dict = fetch_leverage(my_leader_id)

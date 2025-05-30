@@ -35,6 +35,7 @@ def fetch_userinfo():
 
 
 # 定义函数：获取带单员详情
+# {'code': '000000', 'data': {'aumAmount': '3027744.36253720', 'marginBalance': '76683.15410411'}
 def fetch_leader_detail(portfolio_id):
     params = {
         'portfolioId': portfolio_id, # 请求参数：投资组合ID
@@ -74,3 +75,12 @@ def adjust_leverage(symbol, portfolio_id, leverage=5):
     expected_status_code = '000000' # 期望的成功状态码
     # 断言：检查响应状态码是否为期望值，否则抛出错误
     assert response['code'] == expected_status_code, f"{response['message']}, {response['messageDetail']}"
+
+
+
+followed_leader_id = '4466349480575764737'  # 要跟随的带单员的ID
+
+if __name__ == '__main__':
+    # rs = fetch_leader_detail(followed_leader_id)
+    rs = fetch_portfolio(followed_leader_id)
+    print(rs)
