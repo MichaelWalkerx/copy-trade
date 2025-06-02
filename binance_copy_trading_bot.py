@@ -3,8 +3,8 @@ import math # 导入数学库
 from binance.um_futures import UMFutures # 从binance库导入UMFutures类，用于与币安U本位合约API交互
 import time # 导入time库，用于处理时间相关操作
 import logging # 导入logging库，用于记录日志
-import pandas as pd # 导入pandas库，用于数据处理和分析 (在此代码中未使用)
-import openpyxl # 导入openpyxl库，用于读写Excel文件 (在此代码中未使用)
+# import pandas as pd # 导入pandas库，用于数据处理和分析 (在此代码中未使用)
+# import openpyxl # 导入openpyxl库，用于读写Excel文件 (在此代码中未使用)
 
 # 从config模块导入配置信息，包括api_key, api_secret
 from config import api_key,api_secret,followed_leader_id,my_leader_id
@@ -26,7 +26,7 @@ sync_wait_time = 1 # 同步仓位的等待时间（秒）
 
 # binance API key 开启读取权限就行 主要用来读取开仓前的ticker价格 用于滑点判断
 
-# um_futures_client = UMFutures(api_key, api_secret) # 初始化币安U本位合约客户端 (当前被注释掉，未启用)
+um_futures_client = UMFutures(api_key, api_secret) # 初始化币安U本位合约客户端 (当前被注释掉，未启用)
 
 # 滑点控制 这个不太好把握 开启了之后可能开仓平仓不同步 可能出现开了仓没及时平掉
 enable_slippage_protection = False # 是否启用滑点保护
@@ -34,7 +34,7 @@ slippage = 0.1 # 滑点阈值
 
 # 日志级别配置
 logging.basicConfig(
-    filename='./binance_copy_trading_bot.log', # 日志文件名
+    filename='./log.log', # 日志文件名
     level=logging.INFO, # 日志记录级别设置为INFO
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', # 日志格式
 )
@@ -184,24 +184,25 @@ def print___leader_position(leader_position_list):
     logger.info("=========================================\n") # 打印分隔线
 
 # 定义函数：同步仓位
+"""
+同步我的持仓与跟随的带单员的持仓。
+"""
 def sync_position():
     """
-    同步我的持仓与跟随的带单员的持仓。
+    只是获取一下余额信息。
     """
-    # 获取跟随的带单员的详情和持仓信息
-    leader_detail = fetch_leader_detail(followed_leader_id)
-    leader_margin_balance = float(leader_detail['marginBalance']) # 带单员的保证金余额
-    print___leader_detail(leader_detail) # 打印带单员详情
+    leader_detail,leader_margin_balance = get_balance(followed_leader_id)
 
+    """
+    只是获取一下余额信息。
+    """
     leader_portfolio = fetch_portfolio(followed_leader_id)
     # 过滤出带单员当前有持仓的列表 (adl不为零表示有持仓)
     leader_cur_open_position = [item for item in leader_portfolio if item.get('adl') != 0]
     print___leader_position(leader_cur_open_position) # 打印带单员持仓信息
 
     # 获取我自己的详情和持仓信息
-    my_detail = fetch_leader_detail(my_leader_id)
-    my_margin_balance = float(my_detail['marginBalance']) # 我自己的保证金余额
-    print___leader_detail(my_detail) # 打印我自己的详情
+    my_detail,my_margin_balance = get_balance(my_leader_id)
 
     my_portfolio = fetch_portfolio(my_leader_id)
     # 过滤出我自己当前有持仓的列表 (adl不为零表示有持仓)
@@ -265,7 +266,7 @@ def sync_position():
 
         # 带单员新增的仓位 全仓 (注释说明，实际代码中isolated参数是根据带单员的设置传递的)
         # 获取当前交易对的最新价格 (需要um_futures_client启用)
-        # cur_price = um_futures_client.ticker_price(leader_symbol)['price']
+        cur_price = um_futures_client.ticker_price(leader_symbol)['price']
         # 临时使用一个占位符价格，因为um_futures_client被注释掉了
         cur_price = 0.0 # 请注意：此处需要根据实际情况获取当前价格
 
@@ -303,7 +304,7 @@ def sync_position():
             continue
         # 我比带单员多出来的仓位 全部平仓
         # 获取当前交易对的最新价格 (需要um_futures_client启用)
-        # cur_price = um_futures_client.ticker_price(my_symbol)['price']
+        cur_price = um_futures_client.ticker_price(my_symbol)['price']
         # 临时使用一个占位符价格，因为um_futures_client被注释掉了
         cur_price = 0.0 # 请注意：此处需要根据实际情况获取当前价格
 
@@ -317,10 +318,17 @@ def sync_position():
         logger.info(f"{'开' if command == 'OPEN' else '平'}{'空' if order_info['positionSide'] == 'SHORT' else '多'} 成交价格: {order_info['price']} 成交数量: {order_info['origQty']}")
 
 
+def get_balance(leader_id):
+    my_detail = fetch_leader_detail(leader_id)
+    my_margin_balance = float(my_detail['marginBalance'])  # 我自己的保证金余额
+    print___leader_detail(my_detail)  # 打印我自己的详情
+    return my_detail,my_margin_balance
+
+
 # 主程序入口
 if __name__ == "__main__":
-    fetch_leader_detail(followed_leader_id)
+    # fetch_leader_detail(followed_leader_id)
     # 无限循环，持续同步仓位
-    # while True:
-    #     sync_position() # 调用同步仓位函数
-    #     time.sleep(sync_wait_time) # 等待指定的同步间隔时间
+    while True:
+        sync_position() # 调用同步仓位函数
+        time.sleep(sync_wait_time) # 等待指定的同步间隔时间

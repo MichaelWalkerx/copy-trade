@@ -79,8 +79,8 @@ def adjust_leverage(symbol, portfolio_id, leverage=5):
 
 
 followed_leader_id = '4466349480575764737'  # 要跟随的带单员的ID
-
+my_id = '1731764461999'  # 我自己的带单ID (如果自己也是带单员)
 if __name__ == '__main__':
     # rs = fetch_leader_detail(followed_leader_id)
-    rs = fetch_portfolio(followed_leader_id)
+    rs = fetch_leader_detail(followed_leader_id)
     print(rs)
