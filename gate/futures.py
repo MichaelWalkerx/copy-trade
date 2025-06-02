@@ -1,112 +1,85 @@
-# # !/usr/bin/env python
-# # coding: utf-8
-# import logging
-# import time
-# from decimal import Decimal as D, ROUND_UP, getcontext
-#
-# from gate_api import ApiClient, Configuration, FuturesApi, FuturesOrder, Transfer, WalletApi
-# from gate_api.exceptions import GateApiException
-#
-# from config import RunConfig
-#
-# logger = logging.getLogger(__name__)
-#
-#
-# def futures_demo(run_config):
-#     # type: (RunConfig) -> None
-#     settle = "usdt"
-#     contract = "BTC_USDT"
-#
-#     # Initialize API client
-#     # Setting host is optional. It defaults to https://api.gateio.ws/api/v4
-#     config = Configuration(key=run_config.api_key, secret=run_config.api_secret, host=run_config.host_used)
-#     futures_api = FuturesApi(ApiClient(config))
-#
-#     # update position leverage
-#     leverage = "3"
-#     futures_api.update_position_leverage(settle, contract, leverage)
-#
-#     # retrieve position size
-#     position_size = 0
-#     try:
-#         position = futures_api.get_position(settle, contract)
-#         position_size = position.size
-#     except GateApiException as ex:
-#         if ex.label != "POSITION_NOT_FOUND":
-#             raise ex
-#
-#     # set order size
-#     futures_contract = futures_api.get_futures_contract(settle, contract)
-#     order_size = 10
-#     if futures_contract.order_size_min and futures_contract.order_size_min > order_size:
-#         order_size = futures_contract.order_size_min
-#     if position_size < 0:
-#         order_size = 0 - order_size
-#
-#     # example to update risk limit
-#     assert futures_contract.risk_limit_base
-#     assert futures_contract.risk_limit_step
-#     risk_limit = D(futures_contract.risk_limit_base) + D(futures_contract.risk_limit_step)
-#     futures_api.update_position_risk_limit(settle, contract, str(risk_limit))
-#
-#     # retrieve last price to calculate margin needed
-#     tickers = futures_api.list_futures_tickers(settle, contract=contract)
-#     assert len(tickers) == 1
-#     last_price = tickers[0].last
-#     logger.info("last price of contract %s: %s", contract, last_price)
-#
-#     getcontext().prec = 8
-#     getcontext().rounding = ROUND_UP
-#
-#     assert futures_contract.quanto_multiplier
-#     margin = order_size * D(last_price) * D(futures_contract.quanto_multiplier) / D(leverage) * D("1.1")
-#     logger.info("needs margin amount: %s", str(margin))
-#
-#     # if balance is not enough, transfer from spot account
-#     available = "0"
-#     try:
-#         futures_account = futures_api.list_futures_accounts(settle)
-#         available = futures_account.available
-#     except GateApiException as ex:
-#         if ex.label != "USER_NOT_FOUND":
-#             raise ex
-#     logger.info("futures account available: %s %s", available, settle.upper())
-#     if D(available) < margin:
-#         if run_config.use_test:
-#             logger.warning("testnet account balance not enough. make a transferal on web")
-#             return
-#         transfer = Transfer(amount=str(margin), currency=settle.upper(), _from='spot', to='futures')
-#         wallet_api = WalletApi(ApiClient(config))
-#         wallet_api.transfer(transfer)
-#
-#     # example to cancel all open orders in contract
-#     futures_api.cancel_futures_orders(settle, contract)
-#
-#     # order using market price
-#     order = FuturesOrder(contract=contract, size=order_size, price="0", tif='ioc')
-#     try:
-#         order_response = futures_api.create_futures_order(settle, order)
-#     except GateApiException as ex:
-#         logger.error("error encountered creating futures order: %s", ex)
-#         return
-#     logger.info("order %s created with status: %s", order_response.id, order_response.status)
-#
-#     if order_response.status == 'open':
-#         futures_order = futures_api.get_futures_order(settle, str(order_response.id))
-#         logger.info("order %s status %s, total size %s, left %s", futures_order.id, futures_order.status,
-#                     futures_order.size, futures_order.left)
-#         futures_api.cancel_futures_order(settle, str(futures_order.id))
-#         logger.info("order %s cancelled", futures_order.id)
-#     else:
-#         time.sleep(0.2)
-#         order_trades = futures_api.get_my_trades(settle, contract=contract, order=order_response.id)
-#         assert len(order_trades) > 0
-#         trade_size = 0
-#         for t in order_trades:
-#             assert t.order_id == str(order_response.id)
-#             trade_size += t.size
-#             logger.info("order %s filled size %s with price %s", t.order_id, t.size, t.price)
-#         assert trade_size == order_size
-#
-#         # example to update position margin
-#         futures_api.update_position_margin(settle, contract, "0.01")
+# !/usr/bin/env python
+# coding: utf-8
+# 导入必要的模块
+import logging
+import time
+# 导入 Decimal 用于高精度计算，ROUND_UP 用于向上舍入，getcontext 用于获取和设置 Decimal 的上下文
+from decimal import Decimal as D, ROUND_UP, getcontext
+
+# 从 gate_api 库导入所需的类和异常
+from gate_api import ApiClient, Configuration, FuturesApi, FuturesOrder, Transfer, WalletApi
+from gate_api.exceptions import GateApiException
+
+# 从 gate_config 模块导入 RunConfig 类，用于配置运行参数
+from gate_config import RunConfig
+
+# 获取一个 logger 实例，用于记录日志
+logger = logging.getLogger(__name__)
+
+
+# 定义一个函数来演示期货交易操作
+def futures_demo(run_config):
+    # type: (RunConfig) -> None
+    # 设置结算币种为 USDT
+    settle = "usdt"
+    # 设置交易合约为 BTC_USDT
+    contract = "BTC_USDT"
+
+    # 初始化 API 客户端
+    # 设置 host 是可选的，默认为 https://api.gateio.ws/api/v4
+    # 使用 RunConfig 中的 api_key, api_secret 和 host_used 来配置客户端
+    config = Configuration(key=run_config.api_key, secret=run_config.api_secret, host=run_config.host_used)
+    # 创建 FuturesApi 实例，用于执行期货相关的 API 调用
+    futures_api = FuturesApi(ApiClient(config))
+
+    # 更新仓位杠杆
+    leverage = "3"
+    # 调用 update_position_leverage 方法更新指定合约的杠杆
+    # futures_api.update_position_leverage(settle, contract, leverage)
+
+    # 获取仓位大小
+    position_size = 0
+    try:
+        # 调用 get_position 方法获取指定合约的当前仓位信息
+        position = futures_api.get_position(settle, contract)
+        # 获取仓位的数量
+        position_size = position.size
+    except GateApiException as ex:
+        # 捕获 GateApiException 异常
+        # 如果异常标签不是 "POSITION_NOT_FOUND" (仓位未找到)，则重新抛出异常
+        if ex.label != "POSITION_NOT_FOUND":
+            raise ex
+
+
+
+    # 获取最新价格以计算所需保证金
+    # 调用 list_futures_tickers 方法获取指定合约的行情信息
+    tickers = futures_api.list_futures_tickers(settle, contract=contract)
+    # 确保返回的行情信息列表中只有一个元素
+    assert len(tickers) == 1
+    # 获取最新成交价格
+    last_price = tickers[0].last
+    # 记录最新价格日志
+    logger.info("last price of contract %s: %s", contract, last_price)
+
+    # 使用市价下单
+    # 创建一个 FuturesOrder 对象，指定合约、订单数量、价格为 "0" (表示市价)，tif 为 'ioc' (立即成交或取消)
+    order = FuturesOrder(contract=contract, size=order_size, price="0", tif='ioc')
+    try:
+        # 调用 create_futures_order 方法创建期货订单
+        order_response = futures_api.create_futures_order(settle, order)
+    except GateApiException as ex:
+        # 捕获 GateApiException 异常，记录错误日志并返回
+        logger.error("error encountered creating futures order: %s", ex)
+        return
+    # 记录订单创建成功的日志，包括订单 ID 和状态
+    logger.info("order %s created with status: %s", order_response.id, order_response.status)
+
+
+
+
+
+
+if __name__ == '__main__':
+    cfg = RunConfig("91b7b7897be9d71073fa898208f1c9aa","98cd59e4273d77a18219166b4fc27cad0dbefbe751f44f454458d1fca84941dc")
+    futures_demo(cfg)

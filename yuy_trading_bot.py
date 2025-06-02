@@ -133,13 +133,13 @@ def sync_position():
                 command = "CLOSE"
                 quantity = abs(position_amount_diff) # 减仓的价值
                 gate_size =  TradingUtil.calculate_contract_size(获取指定币的价格(leader_symbol), leader_symbol.replace("USDT","_USDT"), quantity)
-                print(f"仓位过大，需要减仓 {gate_size}张")
+                print(f"仓位过大，需要缩仓 {gate_size}张")
             elif position_amount_diff > 0:
                 # 仓位过小，需要加仓
                 command = "OPEN"
                 quantity = position_amount_diff # 加仓的价值
                 gate_size =  TradingUtil.calculate_contract_size(获取指定币的价格(leader_symbol), leader_symbol.replace("USDT","_USDT"), quantity)
-                print(f"仓位过小，需要加仓 {gate_size}张")
+                print(f"仓位过小，需要扩仓 {gate_size}张")
         else:
             # 新增仓位：如果我没有同品种同方向的仓位，则需要开仓
             command = "OPEN"
@@ -167,16 +167,7 @@ def sync_position():
             # 下单
             # TODO 编写Gate的下单逻辑
             # '{"contract":"BTC_USDT","size":6024,"iceberg":0,"price":"3765","tif":"gtc","text":"t-my-custom-id","stp_act":"-"}'
-            order = {
-                "contract":"BTC_USDT",
-                "size":6024,
-                "iceberg":0,
-                "price":"3765",
-                "tif":"gtc",
-                "text":"t-my-custom-id",
-                "stp_act":"-"
-            }
-            order_info = gate开单(order)
+            # order_info = gate开单()
             # 记录成交信息
             # logger.info(f"{'开' if command == 'OPEN' else '平'}{'空' if order_info['positionSide'] == 'SHORT' else '多'} 成交价格: {order_info['price']} 成交数量: {order_info['origQty']}")
 
