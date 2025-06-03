@@ -1,9 +1,26 @@
 
-followed_leader_id = '4466349480575764737' # 要跟随的带单员的ID
-my_leader_id = '4466349480575764737' # 我自己的带单ID (如果自己也是带单员)
+# followed_leader_id = '4466349480575764737' # 要跟随的带单员的ID
+# my_leader_id = '4466349480575764737' # 我自己的带单ID (如果自己也是带单员)
+followed_leader_id = '4480186288406376705' # 要跟随的带单员的ID
+my_leader_id = followed_leader_id # 我自己的带单ID (如果自己也是带单员)
+
+# 0模拟账户大号   1 模拟账户小号   2 实盘大号
+gate_type = "0"
+gate_key = "b1ff2fa9f91972bdd1ca25148861af63"
+gate_secret = "e7239b3c2ca4b37150bf39e7097812556ea220ce5ff1ee1581900bddf9b7114d"
+# gate_host = "https://api.gateio.ws"
+gate_host = "https://api-testnet.gateapi.io/api/v4"
+
+
+if gate_type == "1":
+    gate_key = "91b7b7897be9d71073fa898208f1c9aa"
+    gate_secret = "98cd59e4273d77a18219166b4fc27cad0dbefbe751f44f454458d1fca84941dc"
 
 api_key = "Cm9j5HsUUEYxDzijRGuQZPb2WJUfK39YEg8dlDAux2AkA4oq9wVuqkOIQG82kLFl"
 api_secret = "gWs4BJDQlHUvyB8VjFoLZeeIe1sFYVnvcKLrV97tmF66LsHnd8TBm94OPk8ibfTJ"
+
+
+
 cookies = {
     'bnc-uuid': '416357c5-517c-4206-8c42-b84ef7caa43b',
     'BNC_FV_KEY': '330fa4024e6ca26585ef61c0f1f9d8c7e54f7421',

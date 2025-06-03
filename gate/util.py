@@ -9,10 +9,9 @@ class TradingUtil:
     """
 
     @staticmethod
-    def calculate_contract_size(price: float, coin_name: str, order_amount: float) -> int:
+    def calculate_contract_size(price: float, coin_name: str, order_amount: float):
         """
         计算给定金额可以开多少张合约
-
         Args:
             price: 币的价格
             coin_name: 币的名称 (例如 "BTC_USDT")
@@ -31,7 +30,7 @@ class TradingUtil:
         # contract_value_in_coins = 1 * quanto_multiplier # 这不是合约价值，quanto_multiplier是乘数
 
         # 计算一张合约的价值 (以USDT计价)
-        contract_value_usdt = price * quanto_multiplier
+        contract_value_usdt = float(price) * quanto_multiplier
 
         if contract_value_usdt <= 0:
              print(f"Error: Calculated contract value is zero or negative for {coin_name}. Cannot calculate contract size.")
@@ -42,7 +41,7 @@ class TradingUtil:
         contract_size = order_amount / contract_value_usdt
 
         # 向下取整，舍弃不足一张的部分
-        print(f"使用 {order_usdt} USDT 开 {btc_name} 合约，在价格为 {btc_price} 时，可以开 {math.floor(contract_size)} 张合约。")
+        print(f"USDT 开 {coin_name} 合约，在价格为 {price} 时，可以开 {math.floor(contract_size)} 张合约。")
         return math.floor(contract_size)
 
 if __name__ == '__main__':
@@ -53,7 +52,7 @@ if __name__ == '__main__':
 
     btc_price = 104123.5
     btc_name = "BTC_USDT"
-    order_usdt = 1
+    order_usdt = -100
 
     # 为了测试，手动设置一个 quanto_multiplier 的值，实际应用中应该从文件中加载
     # 这里假设 contract_quanto_multipliers 字典已经加载
